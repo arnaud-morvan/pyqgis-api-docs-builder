@@ -8,7 +8,7 @@
 set -e
 
 QGIS_VERSION=master
-while getopts "q:p:c:v:" opt; do
+while getopts "q:p:c:v:d" opt; do
   case $opt in
   v)
     QGIS_VERSION=$OPTARG
@@ -29,6 +29,9 @@ while getopts "q:p:c:v:" opt; do
     else
       CLASS="$CLASS -c $OPTARG"
     fi
+    ;;
+  d)
+    DEBUGPY="-d"
     ;;
   \?)
     echo "Invalid option: -$OPTARG" >&2
@@ -64,7 +67,7 @@ docker build \
 echo "##[endgroup]"
 
 echo "##[group] Docker run"
-docker run --rm -v ${DIR}:/app/pyqgis -u $(id -u):$(id -g) --name pyqgis \
+docker run --rm --name pyqgis -u $(id -u):$(id -g) -v ${DIR}:/app/pyqgis ${DEBUGPY:+-p 5678:5678} \
   qgis/qgis-python-api-doc:${QGIS_DOCKER_TAG} \
   /bin/bash -c "\
     QT_STYLE_OVERRIDE=Fusion \
@@ -72,5 +75,5 @@ docker run --rm -v ${DIR}:/app/pyqgis -u $(id -u):$(id -g) --name pyqgis \
     QT_SCALE_FACTOR=1 \
     QT_QPA_PLATFORM=offscreen \
     QT_FONT_DPI=96 \
-    /app/pyqgis/scripts/build-docs.sh ${PACKAGE} ${CLASS} -v ${QGIS_VERSION}"
+    /app/pyqgis/scripts/build-docs.sh ${DEBUGPY} ${PACKAGE} ${CLASS} -v ${QGIS_VERSION}"
 echo "##[endgroup]"
